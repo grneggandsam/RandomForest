@@ -1,3 +1,4 @@
+import { randomSubselection } from "../Util/util";
 
 class LeafNode {
   isTrue: boolean;
@@ -32,21 +33,32 @@ export class TreeNode {
     return this.decisionFunction(dataPoint) ? this.trueNode.classify(dataPoint) : this.falseNode.classify(dataPoint);
   }
 }
+
+interface TreeOptions {
+  treeDepth: number;
+  threshold: number;
+  randomFeaturePercent: number;
+}
+
 const standardOptions = {
   treeDepth: 15,
-  threshold: .1
+  threshold: .1,
+  randomFeaturePercent: 1
 };
 
 class Tree {
   treeDepth: number;
   threshold: number;
+  randomFeaturePercent: number;
   hasDesiredAttribute: any;
   rootNode: TreeNode;
   branchingNodes: TreeNode[];
 
   constructor(branchingNodes: TreeNode[], data: any[], hasDesiredAttribute: any, options: any = standardOptions) {
-    this.treeDepth = options.treeDepth;
-    this.threshold = options.threshold;
+    const treeOptions = { ...standardOptions, options };
+    this.treeDepth = treeOptions.treeDepth;
+    this.threshold = treeOptions.threshold;
+    this.randomFeaturePercent = treeOptions.randomFeaturePercent;
     this.hasDesiredAttribute = hasDesiredAttribute;
     this.branchingNodes = branchingNodes;
     /**
@@ -135,12 +147,24 @@ class Tree {
     this.branch(node, rightData, false, curDepth + 1);
   }
 
+  /**
+   * Predicts the class (true or false) given a data point
+   * @param dataPoint
+   */
   classify(dataPoint: any) {
     return this.rootNode.classify(dataPoint);
   }
 
+  /**
+   * Creates a branch off of the original node with a subset of data to
+   * the left or the right
+   * @param originalNode
+   * @param data
+   * @param toLeft
+   * @param depth
+   */
   branch(originalNode: TreeNode, data: any[], toLeft: boolean, depth: number) {
-    const newNode = this.createTreeNode(this.branchingNodes, data);
+    const newNode = this.createTreeNode(randomSubselection(this.branchingNodes, this.randomFeaturePercent), data);
     if (toLeft) {
       originalNode.trueNode = newNode;
     } else {
@@ -149,6 +173,12 @@ class Tree {
     this.createBranches(newNode, data, depth);
   }
 
+  /**
+   * Determines the best branching node to use based on gini impurity
+   * and creates a new TreeNode from it
+   * @param branchingNodes
+   * @param data
+   */
   createTreeNode(branchingNodes: TreeNode[], data: any[]) {
     let minNodeIndex = 0;
     let impurity = 1;

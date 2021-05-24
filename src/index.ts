@@ -16,9 +16,11 @@ function start() {
 
   freezeSurvivalForest.buildTrees();
 
+  freezeSurvivalForest.printTrees();
+
   console.log("Created forest, now predicting results");
   const testDataPoint1 = {
-    "crop": "corn", "variety": "agrigold1", "yield": 153, "maturityDays": 82
+    "crop": "corn", "variety": "agrigold", "yield": 153, "maturityDays": 91
   };
   const result = freezeSurvivalForest.makePrediction(testDataPoint1);
   console.log("Result1 is: ", result);

@@ -1,15 +1,20 @@
 import Tree from "../Tree/Tree";
+import { randomSubselection } from "../Util/util";
 
 const standardOptions = {
-  numTrees: 1,
-  treeDepth: 15,
-  trainingPercent: .3
+  numTrees: 1000,
+  treeDepth: 150,
+  trainingPercent: .1,
+  randomFeaturePercent: .7,
+  threshold: .1
 };
 
 class Forest {
   numTrees: number;
   treeDepth: number;
   trainingPercent: number;
+  threshold: number;
+  randomFeaturePercent: number;
   hasDesiredAttribute: any;
   trainingData: any[];
   branchingNodes: any[];
@@ -22,31 +27,31 @@ class Forest {
     this.numTrees = options.numTrees;
     this.treeDepth = options.treeDepth;
     this.trainingPercent = options.trainingPercent;
+    this.threshold = options.threshold;
+    this.randomFeaturePercent = options.randomFeaturePercent;
   }
 
   buildTrees() {
     console.log("Building Trees");
     for(let i=0; i < this.numTrees; i++) {
-      this.trees.push(new Tree(this.branchingNodes, this.grabDataSubset(), this.hasDesiredAttribute));
+      this.trees.push(new Tree(
+        this.branchingNodes,
+          this.grabDataSubset(),
+        this.hasDesiredAttribute,
+        {
+          randomFeaturePercent: this.randomFeaturePercent,
+          treeDepth: this.treeDepth,
+          threshold: this.threshold
+        }
+        ));
     }
-
-    console.log("printing trees: ");
-    this.trees.forEach(tree => {
-      tree.printTree();
-    });
   }
 
   /**
    * Method for grabbing a random subset of the data with replacement
    */
   grabDataSubset(): any[] {
-    const subsetLength = Math.floor(this.trainingData.length * this.trainingPercent);
-    const returnData = [];
-    for(let i=0; i<subsetLength; i++) {
-      const randomIndex = Math.floor(Math.random() * (this.trainingData.length - 1));
-      returnData.push(this.trainingData[randomIndex]);
-    }
-    return returnData;
+    return randomSubselection(this.trainingData, this.trainingPercent);
   }
 
   makePrediction(dataPoint: any): boolean {
@@ -62,6 +67,13 @@ class Forest {
      * Determine which answer gets majority vote
      */
     return trueVotes > (this.trees.length / 2);
+  }
+
+  printTrees() {
+    console.log("printing trees: ");
+    this.trees.forEach(tree => {
+      tree.printTree();
+    });
   }
 }
 

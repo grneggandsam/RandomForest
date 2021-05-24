@@ -6,7 +6,7 @@
   { "crop": "corn", "variety": "agrigold", "yield": 160, "maturityDays": 72, "survivedFreeze": true },
   { "crop": "corn", "variety": "agrigold", "yield": 163, "maturityDays": 78, "survivedFreeze": true },
   { "crop": "corn", "variety": "freshuns", "yield": 156, "maturityDays": 88, "survivedFreeze": false },
-  { "crop": "corn", "variety": "freshuns", "yield": 162, "maturityDays": 92, "survivedFreeze": true },
+  { "crop": "corn", "variety": "freshuns", "yield": 162, "maturityDays": 92, "survivedFreeze": false },
   { "crop": "corn", "variety": "freshuns", "yield": 170, "maturityDays": 75, "survivedFreeze": false },
   { "crop": "corn", "variety": "freshuns", "yield": 174, "maturityDays": 78, "survivedFreeze": true },
   { "crop": "corn", "variety": "freshuns", "yield": 162, "maturityDays": 71, "survivedFreeze": false },

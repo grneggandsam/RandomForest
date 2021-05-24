@@ -18,10 +18,10 @@ const isAgrigold = new TreeNode((dataPoint: SeedData) => {
   return dataPoint.variety == "agrigold";
 }, "isAgrigold");
 const isAgrigold1 = new TreeNode((dataPoint: SeedData) => {
-  return dataPoint.variety == "agrigold1";
+  return dataPoint.variety == "agrigold-1";
 }, "isAgrigold1");
 const isAgrigold2 = new TreeNode((dataPoint: SeedData) => {
-  return dataPoint.variety == "agrigold2";
+  return dataPoint.variety == "agrigold-2";
 }, "isAgrigold2");
 const lowYield = new TreeNode((dataPoint: SeedData) => {
   return dataPoint.yield < 86;
