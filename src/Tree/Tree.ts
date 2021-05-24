@@ -52,7 +52,7 @@ class Tree {
     /**
      * Choose root node first
      */
-    this.rootNode = this.chooseNode(branchingNodes, data);
+    this.rootNode = this.createTreeNode(branchingNodes, data);
 
     /**
      * Run recursive function to create branches
@@ -115,7 +115,7 @@ class Tree {
       } else {
         node.trueNode = new LeafNode(false);
       }
-      this.createBranches(this.chooseNode(this.branchingNodes, rightData), rightData, curDepth + 1);
+      this.branch(node, rightData, false, curDepth + 1);
       return;
     }
     if (gRight < this.threshold) {
@@ -124,22 +124,32 @@ class Tree {
       } else {
         node.falseNode = new LeafNode(false);
       }
-      this.createBranches(this.chooseNode(this.branchingNodes, leftData), leftData, curDepth + 1);
+      this.branch(node, leftData, true, curDepth + 1);
       return;
     }
 
     /**
      * Recursively Create new nodes if no end condition
      */
-    this.createBranches(this.chooseNode(this.branchingNodes, leftData), leftData, curDepth + 1);
-    this.createBranches(this.chooseNode(this.branchingNodes, rightData), rightData, curDepth + 1);
+    this.branch(node, leftData, true, curDepth + 1);
+    this.branch(node, rightData, false, curDepth + 1);
   }
 
   classify(dataPoint: any) {
     return this.rootNode.classify(dataPoint);
   }
 
-  chooseNode(branchingNodes: TreeNode[], data: any[]) {
+  branch(originalNode: TreeNode, data: any[], toLeft: boolean, depth: number) {
+    const newNode = this.createTreeNode(this.branchingNodes, data);
+    if (toLeft) {
+      originalNode.trueNode = newNode;
+    } else {
+      originalNode.falseNode = newNode;
+    }
+    this.createBranches(newNode, data, depth);
+  }
+
+  createTreeNode(branchingNodes: TreeNode[], data: any[]) {
     let minNodeIndex = 0;
     let impurity = 1;
     const nodeImpurities = branchingNodes.map(node => this.nodeGiniImpurity(node, data));
@@ -149,7 +159,8 @@ class Tree {
         minNodeIndex = index;
       }
     });
-    return branchingNodes[minNodeIndex];
+    const nodeClone = branchingNodes[minNodeIndex];
+    return new TreeNode(nodeClone.decisionFunction, nodeClone.name);
   }
 
   nodeGiniImpurity(node: TreeNode, data: any[]) {
@@ -190,6 +201,11 @@ class Tree {
     /**
      * Create a JSON for nodes
      */
+    const jsonTree = this.rootNode;
+    /**
+     * Stringify JSON
+     */
+    console.log(JSON.stringify(jsonTree));
   }
 }
 

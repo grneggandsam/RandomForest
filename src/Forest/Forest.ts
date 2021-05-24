@@ -1,7 +1,7 @@
 import Tree from "../Tree/Tree";
 
 const standardOptions = {
-  numTrees: 100,
+  numTrees: 1,
   treeDepth: 15,
   trainingPercent: .3
 };
@@ -29,6 +29,11 @@ class Forest {
     for(let i=0; i < this.numTrees; i++) {
       this.trees.push(new Tree(this.branchingNodes, this.grabDataSubset(), this.hasDesiredAttribute));
     }
+
+    console.log("printing trees: ");
+    this.trees.forEach(tree => {
+      tree.printTree();
+    });
   }
 
   /**
@@ -44,7 +49,7 @@ class Forest {
     return returnData;
   }
 
-  makePrediction(dataPoint: any) {
+  makePrediction(dataPoint: any): boolean {
     /**
      * Gather votes from all trees in the forest
      */
