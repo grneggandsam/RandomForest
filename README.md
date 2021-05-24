@@ -1,4 +1,4 @@
-Random Forest
+#Random Forest
 
 A basic random forest implementation in typescript
 
