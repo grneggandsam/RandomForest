@@ -1,0 +1,23 @@
+[
+  { "crop": "corn", "variety": "agrigold", "yield": 160, "maturityDays": 80, "survivedFreeze": true },
+  { "crop": "corn", "variety": "agrigold", "yield": 180, "maturityDays": 72, "survivedFreeze": false },
+  { "crop": "corn", "variety": "agrigold", "yield": 140, "maturityDays": 71, "survivedFreeze": true },
+  { "crop": "corn", "variety": "agrigold", "yield": 130, "maturityDays": 74, "survivedFreeze": false },
+  { "crop": "corn", "variety": "agrigold", "yield": 160, "maturityDays": 72, "survivedFreeze": true },
+  { "crop": "corn", "variety": "agrigold", "yield": 163, "maturityDays": 78, "survivedFreeze": true },
+  { "crop": "corn", "variety": "freshuns", "yield": 156, "maturityDays": 88, "survivedFreeze": false },
+  { "crop": "corn", "variety": "freshuns", "yield": 162, "maturityDays": 92, "survivedFreeze": true },
+  { "crop": "corn", "variety": "freshuns", "yield": 170, "maturityDays": 75, "survivedFreeze": false },
+  { "crop": "corn", "variety": "freshuns", "yield": 174, "maturityDays": 78, "survivedFreeze": true },
+  { "crop": "corn", "variety": "freshuns", "yield": 162, "maturityDays": 71, "survivedFreeze": false },
+  { "crop": "soy", "variety": "agrigold-1", "yield": 90, "maturityDays": 62, "survivedFreeze": true },
+  { "crop": "soy", "variety": "agrigold-1", "yield": 75, "maturityDays": 53, "survivedFreeze": true },
+  { "crop": "soy", "variety": "agrigold-1", "yield": 76, "maturityDays": 67, "survivedFreeze": false },
+  { "crop": "soy", "variety": "agrigold-1", "yield": 93, "maturityDays": 65, "survivedFreeze": true },
+  { "crop": "soy", "variety": "agrigold-1", "yield": 99, "maturityDays": 73, "survivedFreeze": true },
+  { "crop": "soy", "variety": "agrigold-2", "yield": 86, "maturityDays": 52, "survivedFreeze": true },
+  { "crop": "soy", "variety": "agrigold-2", "yield": 84, "maturityDays": 60, "survivedFreeze": false },
+  { "crop": "soy", "variety": "agrigold-2", "yield": 87, "maturityDays": 65, "survivedFreeze": false },
+  { "crop": "soy", "variety": "agrigold-2", "yield": 82, "maturityDays": 68, "survivedFreeze": false },
+  { "crop": "soy", "variety": "agrigold-2", "yield": 89, "maturityDays": 72, "survivedFreeze": false }
+]

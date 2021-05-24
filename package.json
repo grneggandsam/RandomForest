@@ -1,0 +1,44 @@
+{
+  "name": "random-forest",
+  "version": "1.0.0",
+  "description": "Building a basic random-forest package",
+  "main": "src/index.js",
+  "author": "Sam Milligan",
+  "license": "ISC",
+  "scripts": {
+    "dev": "tsc-watch --onSuccess \"node dist/lib/index.js\"",
+    "lint": "eslint -c .eslintrc.js --ext .ts 'src/**/*.ts'",
+    "build": "rm -rf ./dist && tsc",
+    "start": "npm run build && node dist/lib/index.js"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.10.5",
+    "@babel/preset-env": "^7.10.4",
+    "@babel/preset-typescript": "^7.10.4",
+    "@types/bluebird": "^3.5.32",
+    "@types/bookshelf": "^1.1.1",
+    "@types/chalk": "^2.2.0",
+    "@types/create-error": "^0.3.30",
+    "@types/jest": "^26.0.7",
+    "@types/knex": "^0.16.1",
+    "@types/node": "^14.0.24",
+    "bluebird": "^3.7.2",
+    "create-error": "^0.3.1",
+    "eslint": "^7.5.0",
+    "jest": "^26.1.0",
+    "ts-jest": "^26.5.4",
+    "tsc-watch": "^4.2.9",
+    "typescript": "^3.9.7"
+  },
+  "dependencies": {
+    "@sentry/node": "^5.20.1",
+    "@suretrack/lib-node-models": "git+ssh:git@gitlab.intellifarms.com:ifp/backend/libs/lib-node-models.git#^1.2.20",
+    "@types/express": "^4.17.11",
+    "bookshelf": "^1.2.0",
+    "dotenv": "^8.2.0",
+    "moment": "^2.29.1",
+    "moment-timezone": "^0.5.33",
+    "mysql2": "^2.1.0",
+    "ts-node": "^8.10.2"
+  }
+}

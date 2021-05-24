@@ -1,0 +1,18 @@
+{
+  "compilerOptions": {
+    "allowSyntheticDefaultImports": true,
+    "declaration": true,
+    "declarationDir": "dist/types",
+    "esModuleInterop": true,
+    "module": "CommonJS",
+    "moduleResolution": "node",
+    "outDir": "dist/lib",
+    "sourceMap": true,
+    "strict": true,
+    "typeRoots": ["node_modules/@types", "src/types"],
+    "resolveJsonModule": true,
+    "target": "ES6"
+  },
+  "include": ["src"],
+  "exclude": ["**/*.test.ts"]
+}
