@@ -6,9 +6,9 @@ export const testFreezeSurvivalForest = () => {
   console.log("Creating Forest");
   const freezeSurvivalForest = getFreezeSurvivalForest();
 
-  freezeSurvivalForest.buildTrees();
+  freezeSurvivalForest.plantTrees();
 
-  freezeSurvivalForest.printTrees();
+  freezeSurvivalForest.saveForest(process.cwd() + "/SavedForests");
 
   console.log("Created forest, now predicting results");
   const testDataPoint1 = {

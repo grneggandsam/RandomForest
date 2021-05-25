@@ -1,5 +1,7 @@
 import Tree from "../Tree/Tree";
 import { randomSubselection } from "../Util/util";
+import fs from "fs";
+import path from "path";
 
 const standardOptions = {
   numTrees: 1000,
@@ -31,19 +33,19 @@ class Forest {
     this.randomFeaturePercent = options.randomFeaturePercent;
   }
 
-  buildTrees() {
-    console.log("Building Trees");
+  plantTrees() {
+    console.log("Planting Trees");
     for(let i=0; i < this.numTrees; i++) {
-      this.trees.push(new Tree(
-        this.branchingNodes,
-        randomSubselection(this.trainingData, this.trainingPercent),
+      const newTree = new Tree(
         this.hasDesiredAttribute,
         {
           randomFeaturePercent: this.randomFeaturePercent,
           treeDepth: this.treeDepth,
           threshold: this.threshold
         }
-        ));
+      );
+      newTree.grow(this.branchingNodes, randomSubselection(this.trainingData, this.trainingPercent));
+      this.trees.push(newTree);
     }
   }
 
@@ -65,11 +67,25 @@ class Forest {
     return trueVotes > (this.trees.length / 2);
   }
 
+  /**
+   * Simply prints the human-readable version of the JSON blob of the trees
+   */
   printTrees() {
     console.log("printing trees: ");
     this.trees.forEach(tree => {
       tree.printTree();
     });
+  }
+  
+  saveForest(filePath: string) {
+    const encodedForest = this.trees.map(tree => tree.encodeTree());
+    const stringifiedForest = JSON.stringify(encodedForest);
+
+    fs.writeFile(filePath + "/forest.json", stringifiedForest, err => {
+      if (err) {
+        throw(err);
+      }
+    })
   }
 }
 

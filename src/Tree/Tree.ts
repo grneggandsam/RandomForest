@@ -10,16 +10,22 @@ class LeafNode {
   classify() {
     return this.isTrue;
   }
+
+  encode(): any {
+    return {i: -1, t: this.isTrue ? 1 : 0};
+  }
 }
 
 export class TreeNode {
   name?: string;
+  index?: number;
   decisionFunction: any;
   trueNode?: TreeNode | LeafNode;
   falseNode?: TreeNode | LeafNode;
 
-  constructor(decisionFunction: any, name?: string) {
+  constructor(decisionFunction: any, name?: string, index?: number) {
     this.name = name;
+    this.index = index;
     this.decisionFunction = decisionFunction;
   }
 
@@ -31,6 +37,14 @@ export class TreeNode {
       throw("Incomplete Tree: nodes aren't built out");
     }
     return this.decisionFunction(dataPoint) ? this.trueNode.classify(dataPoint) : this.falseNode.classify(dataPoint);
+  }
+
+  encode(): any {
+    return {
+      i: this.index,
+      l: this?.trueNode?.encode(),
+      r: this?.falseNode?.encode()
+    };
   }
 }
 
@@ -51,15 +65,21 @@ class Tree {
   threshold: number;
   randomFeaturePercent: number;
   hasDesiredAttribute: any;
-  rootNode: TreeNode;
-  branchingNodes: TreeNode[];
+  rootNode?: TreeNode;
+  branchingNodes?: TreeNode[];
 
-  constructor(branchingNodes: TreeNode[], data: any[], hasDesiredAttribute: any, options: any = standardOptions) {
+  constructor(hasDesiredAttribute: any, options: any = standardOptions) {
     const treeOptions = { ...standardOptions, options };
     this.treeDepth = treeOptions.treeDepth;
     this.threshold = treeOptions.threshold;
     this.randomFeaturePercent = treeOptions.randomFeaturePercent;
     this.hasDesiredAttribute = hasDesiredAttribute;
+  }
+
+  /**
+   * Method to grow the tree "organically" using branching nodes and data
+   */
+  grow(branchingNodes: TreeNode[], data: any[]) {
     this.branchingNodes = branchingNodes;
     /**
      * Choose root node first
@@ -152,6 +172,9 @@ class Tree {
    * @param dataPoint
    */
   classify(dataPoint: any) {
+    if (!this.rootNode) {
+      throw("Root node not found. Please grow tree.");
+    }
     return this.rootNode.classify(dataPoint);
   }
 
@@ -190,7 +213,7 @@ class Tree {
       }
     });
     const nodeClone = branchingNodes[minNodeIndex];
-    return new TreeNode(nodeClone.decisionFunction, nodeClone.name);
+    return new TreeNode(nodeClone.decisionFunction, nodeClone.name, minNodeIndex);
   }
 
   nodeGiniImpurity(node: TreeNode, data: any[]) {
@@ -236,6 +259,10 @@ class Tree {
      * Stringify JSON
      */
     console.log(JSON.stringify(jsonTree));
+  }
+
+  encodeTree() {
+    return this?.rootNode?.encode();
   }
 }
 
