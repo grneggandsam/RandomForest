@@ -36,7 +36,7 @@ class Forest {
     for(let i=0; i < this.numTrees; i++) {
       this.trees.push(new Tree(
         this.branchingNodes,
-          this.grabDataSubset(),
+        randomSubselection(this.trainingData, this.trainingPercent),
         this.hasDesiredAttribute,
         {
           randomFeaturePercent: this.randomFeaturePercent,
@@ -47,13 +47,6 @@ class Forest {
     }
   }
 
-  /**
-   * Method for grabbing a random subset of the data with replacement
-   */
-  grabDataSubset(): any[] {
-    return randomSubselection(this.trainingData, this.trainingPercent);
-  }
-
   makePrediction(dataPoint: any): boolean {
     /**
      * Gather votes from all trees in the forest
@@ -62,6 +55,9 @@ class Forest {
     this.trees.forEach(tree => {
       trueVotes += tree.classify(dataPoint) ? 1 : 0;
     });
+
+    console.log("True votes: ", trueVotes);
+    console.log("False votes: ", this.trees.length - trueVotes);
 
     /**
      * Determine which answer gets majority vote
