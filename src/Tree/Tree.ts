@@ -264,6 +264,59 @@ class Tree {
   encodeTree() {
     return this?.rootNode?.encode();
   }
+
+  /**
+   * Recursive function to decode a branch given an encoding
+   * @param encodedBranch
+   * @param parentNode
+   * @param toLeft
+   */
+  decodeBranch(encodedBranch: any, parentNode: TreeNode, toLeft: boolean) {
+    if (!this.branchingNodes) {
+      throw("Branching nodes not set before decoding");
+    }
+    /**
+     * Determine if leaf node
+     */
+    if (encodedBranch.i == -1) {
+      const node = new LeafNode(encodedBranch.t == 1);
+      if (toLeft) {
+        parentNode.trueNode = node;
+      } else {
+        parentNode.falseNode = node;
+      }
+      return;
+    }
+    const nodeClone = this.branchingNodes[encodedBranch.i];
+    const node = new TreeNode(nodeClone.decisionFunction, nodeClone.name, encodedBranch.i);
+    if (toLeft) {
+      parentNode.trueNode = node;
+    } else {
+      parentNode.falseNode = node;
+    }
+    this.decodeBranch(encodedBranch.l, node, true);
+    this.decodeBranch(encodedBranch.r, node, false);
+  }
+
+  decodeTree(branchingNodes: TreeNode[], encodedTree: any) {
+    this.branchingNodes = branchingNodes;
+    /**
+     * First decode root node
+     */
+    const nodeClone = branchingNodes[encodedTree.i];
+    const rootNode = new TreeNode(nodeClone.decisionFunction, nodeClone.name, encodedTree.i);
+
+    /**
+     * next recursively grow the branches out
+     */
+    this.decodeBranch(encodedTree.l, rootNode, true);
+    this.decodeBranch(encodedTree.r, rootNode, false);
+
+    /**
+     * Assign root node
+     */
+    this.rootNode = rootNode;
+  }
 }
 
 export default Tree;

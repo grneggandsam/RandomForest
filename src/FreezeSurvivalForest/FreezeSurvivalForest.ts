@@ -2,15 +2,24 @@ import Forest from "../Forest/Forest";
 import FreezeSurvivalBranchNodes from "./FreezeSurvivalBranchNodes";
 import testData from "../Fixtures/testData1.json";
 
-export const testFreezeSurvivalForest = () => {
+export const buildFreezeSurvivalForest = () => {
   console.log("Creating Forest");
   const freezeSurvivalForest = getFreezeSurvivalForest();
 
-  freezeSurvivalForest.plantTrees();
+  freezeSurvivalForest.plantTrees(testData, FreezeSurvivalBranchNodes);
 
-  freezeSurvivalForest.saveForest(process.cwd() + "/SavedForests");
+  freezeSurvivalForest.saveForest(`${process.cwd()}/SavedForests`, "freezeSurvivalForest");
+  return freezeSurvivalForest;
+};
 
-  console.log("Created forest, now predicting results");
+export const consumeFreezeSurvivalForest = async () => {
+  const freezeSurvivalForest = getFreezeSurvivalForest();
+
+  await freezeSurvivalForest.loadForest(`${process.cwd()}/SavedForests`, "freezeSurvivalForest", FreezeSurvivalBranchNodes);
+  return freezeSurvivalForest;
+};
+
+export const testFreezeSurvivalForest = (freezeSurvivalForest: Forest) => {
   const testDataPoint1 = {
     "crop": "corn", "variety": "agrigold", "yield": 153, "maturityDays": 91
   };
@@ -26,8 +35,6 @@ export const testFreezeSurvivalForest = () => {
 
 export const getFreezeSurvivalForest = () => {
   return new Forest(
-    testData,
-    FreezeSurvivalBranchNodes,
     (dataPoint: any) => {
       return dataPoint?.survivedFreeze;
     }

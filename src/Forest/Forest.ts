@@ -18,13 +18,11 @@ class Forest {
   threshold: number;
   randomFeaturePercent: number;
   hasDesiredAttribute: any;
-  trainingData: any[];
-  branchingNodes: any[];
+  trainingData?: any[];
+  branchingNodes?: any[];
   trees: Tree[] = [];
 
-  constructor(trainingData: any[], branchingNodes: any[], hasDesiredAttribute: any, options: any = standardOptions) {
-    this.trainingData = trainingData;
-    this.branchingNodes = branchingNodes;
+  constructor(hasDesiredAttribute: any, options: any = standardOptions) {
     this.hasDesiredAttribute = hasDesiredAttribute;
     this.numTrees = options.numTrees;
     this.treeDepth = options.treeDepth;
@@ -33,7 +31,9 @@ class Forest {
     this.randomFeaturePercent = options.randomFeaturePercent;
   }
 
-  plantTrees() {
+  plantTrees(trainingData: any[], branchingNodes: any[]) {
+    this.trainingData = trainingData;
+    this.branchingNodes = branchingNodes;
     console.log("Planting Trees");
     for(let i=0; i < this.numTrees; i++) {
       const newTree = new Tree(
@@ -77,15 +77,40 @@ class Forest {
     });
   }
   
-  saveForest(filePath: string) {
+  saveForest(filePath: string, fileName: string = "forest.json") {
     const encodedForest = this.trees.map(tree => tree.encodeTree());
     const stringifiedForest = JSON.stringify(encodedForest);
 
-    fs.writeFile(filePath + "/forest.json", stringifiedForest, err => {
+    fs.writeFile(`${filePath}/${fileName}`, stringifiedForest, err => {
       if (err) {
         throw(err);
       }
     })
+  }
+  
+  async loadForest(filePath: string, fileName: string = "forest.json", branchingNodes: any[]) {
+    return new Promise((resolve, reject) => {
+      this.branchingNodes = branchingNodes;
+      fs.readFile(`${filePath}/${fileName}`, 'utf8', (err, data) => {
+        if (err) {
+          reject(err);
+        }
+        const jsonForest = JSON.parse(data);
+        jsonForest.forEach((encodedTree: any) => {
+          const newTree = new Tree(
+            this.hasDesiredAttribute,
+            {
+              randomFeaturePercent: this.randomFeaturePercent,
+              treeDepth: this.treeDepth,
+              threshold: this.threshold
+            }
+          );
+          newTree.decodeTree(branchingNodes, encodedTree);
+          this.trees.push(newTree);
+        });
+        resolve(this);
+      })
+    });
   }
 }
 
