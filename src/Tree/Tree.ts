@@ -54,6 +54,12 @@ interface TreeOptions {
   randomFeaturePercent: number;
 }
 
+/**
+ * Options to use when training a tree
+ * treeDepth determines the depth of the tree (how many levels of branches)
+ * threshold determines how close we must be with percentages correct to terminate a branch
+ * randomFeaturePercent determines what percentage of the training data each tree is trained on (when randomly grabbed)
+ */
 const standardOptions = {
   treeDepth: 15,
   threshold: .1,
@@ -68,7 +74,7 @@ class Tree {
   rootNode?: TreeNode;
   branchingNodes?: TreeNode[];
 
-  constructor(hasDesiredAttribute: any, options: any = standardOptions) {
+  constructor(hasDesiredAttribute: any, options: TreeOptions = standardOptions) {
     const treeOptions = { ...standardOptions, options };
     this.treeDepth = treeOptions.treeDepth;
     this.threshold = treeOptions.threshold;
@@ -216,6 +222,12 @@ class Tree {
     return new TreeNode(nodeClone.decisionFunction, nodeClone.name, minNodeIndex);
   }
 
+  /**
+   * Method of determining which branch to take when training
+   * See https://www.geeksforgeeks.org/gini-impurity-and-entropy-in-decision-tree-ml/
+   * @param node
+   * @param data
+   */
   nodeGiniImpurity(node: TreeNode, data: any[]) {
     let leftData: any[] = [];
     let rightData: any[] = [];
@@ -298,6 +310,11 @@ class Tree {
     this.decodeBranch(encodedBranch.r, node, false);
   }
 
+  /**
+   * Function for interpreting the forest created by the training algorithm
+   * @param branchingNodes
+   * @param encodedTree
+   */
   decodeTree(branchingNodes: TreeNode[], encodedTree: any) {
     this.branchingNodes = branchingNodes;
     /**
