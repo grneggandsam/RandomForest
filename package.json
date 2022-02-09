@@ -4,7 +4,7 @@
   "description": "Building a basic random-forest package",
   "main": "src/index.js",
   "author": "Sam Milligan",
-  "license": "ISC",
+  "license": "MIT",
   "scripts": {
     "dev": "tsc-watch --onSuccess \"node dist/lib/index.js\"",
     "lint": "eslint -c .eslintrc.js --ext .ts 'src/**/*.ts'",
