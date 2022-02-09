@@ -1,5 +1,10 @@
 import { TreeNode } from "../Tree/Tree";
 
+/**
+ * The "branch nodes" are essentially a set of functions which can be used to make decisions.
+ * TODO: allow for randomizing elements of the functions to further identify optimized decisions within a tree
+ */
+
 interface SeedData {
   crop: string;
   variety: string;
