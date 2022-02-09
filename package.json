@@ -31,14 +31,9 @@
     "typescript": "^3.9.7"
   },
   "dependencies": {
-    "@sentry/node": "^5.20.1",
-    "@suretrack/lib-node-models": "git+ssh:git@gitlab.intellifarms.com:ifp/backend/libs/lib-node-models.git#^1.2.20",
-    "@types/express": "^4.17.11",
-    "bookshelf": "^1.2.0",
     "dotenv": "^8.2.0",
     "moment": "^2.29.1",
     "moment-timezone": "^0.5.33",
-    "mysql2": "^2.1.0",
     "ts-node": "^8.10.2"
   }
 }
