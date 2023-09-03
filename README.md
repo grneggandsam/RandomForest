@@ -4,6 +4,10 @@ A basic random forest implementation in typescript
 
 To run the start function `yarn && yarn start`
 
+To run the stock forest `yarn start stocks`
+
+See the index file for other run options
+
 
 ## How It Works?
 

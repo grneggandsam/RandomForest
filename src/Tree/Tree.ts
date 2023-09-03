@@ -12,21 +12,36 @@ class LeafNode {
   }
 
   encode(): any {
-    return {i: -1, t: this.isTrue ? 1 : 0};
+    return {i: -1, w: 1, t: this.isTrue ? 1 : 0};
   }
+}
+
+interface TreeNodeOptions {
+  index?: number
+  owner?: Tree
+  weight?: number
+  impurity?: number
+  range?: number[]
 }
 
 export class TreeNode {
   name?: string;
   index?: number;
+  weight?: number;
   decisionFunction: any;
   trueNode?: TreeNode | LeafNode;
   falseNode?: TreeNode | LeafNode;
+  owner?: Tree;
+  impurity?: number;
+  range?: number[];
 
-  constructor(decisionFunction: any, name?: string, index?: number) {
-    this.name = name;
-    this.index = index;
+  constructor(decisionFunction: any, name?: string, options?: TreeNodeOptions) {
     this.decisionFunction = decisionFunction;
+    this.name = name;
+    this.index = options?.index;
+    this.owner = options?.owner;
+    this.weight = options?.weight ?? 1;
+    this.impurity = options?.impurity;
   }
 
   classify(dataPoint: any): any {
@@ -36,12 +51,16 @@ export class TreeNode {
     if (!this.trueNode || !this.falseNode) {
       throw("Incomplete Tree: nodes aren't built out");
     }
-    return this.decisionFunction(dataPoint) ? this.trueNode.classify(dataPoint) : this.falseNode.classify(dataPoint);
+    if (this.owner && this.name) {
+      this.owner.incrementBranchFuncMapCount(this.name);
+    }
+    return this.decisionFunction(dataPoint, this.weight) ? this.trueNode.classify(dataPoint) : this.falseNode.classify(dataPoint);
   }
 
   encode(): any {
     return {
       i: this.index,
+      w: this.weight,
       l: this?.trueNode?.encode(),
       r: this?.falseNode?.encode()
     };
@@ -73,9 +92,12 @@ class Tree {
   hasDesiredAttribute: any;
   rootNode?: TreeNode;
   branchingNodes?: TreeNode[];
+  score: number = 0;
+  branchFuncMap: any = {};
+  worstImpurity: number = 0;
 
   constructor(hasDesiredAttribute: any, options: TreeOptions = standardOptions) {
-    const treeOptions = { ...standardOptions, options };
+    const treeOptions = { ...standardOptions, ...options };
     this.treeDepth = treeOptions.treeDepth;
     this.threshold = treeOptions.threshold;
     this.randomFeaturePercent = treeOptions.randomFeaturePercent;
@@ -96,6 +118,8 @@ class Tree {
      * Run recursive function to create branches
      */
     this.createBranches(this.rootNode, data, 1);
+
+    return this.branchFuncMap;
   }
 
   /**
@@ -108,7 +132,7 @@ class Tree {
     let leftData: any[] = [];
     let rightData: any[] = [];
     data.forEach(point => {
-      if (node.decisionFunction(point)) {
+      if (node.decisionFunction(point, node.weight)) {
         leftData.push(point)
       } else {
         rightData.push(point);
@@ -121,7 +145,7 @@ class Tree {
     const leftWins = leftData.filter(point => this.hasDesiredAttribute(point)).length;
     const leftLosses = leftData.length - leftWins;
     const rightWins = rightData.filter(point => this.hasDesiredAttribute(point)).length;
-    const rightLosses = rightData.length = rightWins;
+    const rightLosses = rightData.length - rightWins;
     const gLeft = this.giniImpurity(leftWins, leftLosses);
     const gRight = this.giniImpurity(rightWins, rightLosses);
 
@@ -129,6 +153,17 @@ class Tree {
      * End conditions
      */
     if (curDepth >= this.treeDepth || (gLeft < this.threshold && gRight < this.threshold)) {
+      if (leftData.length == 0) {
+        node.trueNode = new LeafNode(false);
+        node.falseNode = new LeafNode(true);
+        return;
+      }
+      if (rightData.length == 0) {
+        node.trueNode = new LeafNode(true);
+        node.falseNode = new LeafNode(false);
+        return;
+      }
+
       if (leftWins / leftData.length >= rightWins / rightData.length) {
         /**
          * Left is true predictor
@@ -177,7 +212,7 @@ class Tree {
    * Predicts the class (true or false) given a data point
    * @param dataPoint
    */
-  classify(dataPoint: any) {
+  classify(dataPoint: any): boolean {
     if (!this.rootNode) {
       throw("Root node not found. Please grow tree.");
     }
@@ -210,16 +245,29 @@ class Tree {
    */
   createTreeNode(branchingNodes: TreeNode[], data: any[]) {
     let minNodeIndex = 0;
+    let minNode = branchingNodes[0];
     let impurity = 1;
-    const nodeImpurities = branchingNodes.map(node => this.nodeGiniImpurity(node, data));
-    nodeImpurities.forEach((nodeImpurity, index) => {
+    branchingNodes.forEach(node => {
+      const nodeImpurity = this.nodeGiniImpurity(node, data);
       if (nodeImpurity < impurity) {
         impurity = nodeImpurity;
-        minNodeIndex = index;
+        minNodeIndex = node?.index ?? 0;
+        minNode = node;
       }
     });
-    const nodeClone = branchingNodes[minNodeIndex];
-    return new TreeNode(nodeClone.decisionFunction, nodeClone.name, minNodeIndex);
+    const nodeClone = minNode;
+    if (nodeClone?.name) {
+      if (!this.branchFuncMap[nodeClone?.name]) {
+        this.branchFuncMap[nodeClone?.name] = 0;
+      }
+      this.branchFuncMap[nodeClone.name]++;
+    }
+    return new TreeNode(nodeClone.decisionFunction, nodeClone.name, {
+      index: minNodeIndex,
+      owner: this,
+      weight: nodeClone.weight,
+      impurity,
+    });
   }
 
   /**
@@ -232,7 +280,7 @@ class Tree {
     let leftData: any[] = [];
     let rightData: any[] = [];
     data.forEach(point => {
-      if (node.decisionFunction(point)) {
+      if (node.decisionFunction(point, node.weight)) {
         leftData.push(point)
       } else {
         rightData.push(point);
@@ -259,7 +307,7 @@ class Tree {
    */
   giniImpurity(p1: number, p2: number) {
     const total = p1 + p2;
-    return 1 - ((p1 / total)^2 + (p2 / total)^2);
+    return 1 - (Math.pow(p1 / total, 2) + Math.pow(p2 / total, 2));
   }
 
   printTree() {
@@ -300,7 +348,11 @@ class Tree {
       return;
     }
     const nodeClone = this.branchingNodes[encodedBranch.i];
-    const node = new TreeNode(nodeClone.decisionFunction, nodeClone.name, encodedBranch.i);
+    const node = new TreeNode(nodeClone.decisionFunction, nodeClone.name, {
+      index: encodedBranch.i,
+      owner: this,
+      weight: parseFloat(encodedBranch.w),
+    });
     if (toLeft) {
       parentNode.trueNode = node;
     } else {
@@ -321,7 +373,11 @@ class Tree {
      * First decode root node
      */
     const nodeClone = branchingNodes[encodedTree.i];
-    const rootNode = new TreeNode(nodeClone.decisionFunction, nodeClone.name, encodedTree.i);
+    const rootNode = new TreeNode(nodeClone.decisionFunction, nodeClone.name, {
+      index: encodedTree.i,
+      owner: this,
+      weight: parseFloat(encodedTree.w),
+    });
 
     /**
      * next recursively grow the branches out
@@ -333,6 +389,13 @@ class Tree {
      * Assign root node
      */
     this.rootNode = rootNode;
+  }
+
+  incrementBranchFuncMapCount(functionName: string) {
+    if (!this.branchFuncMap[functionName]) {
+      this.branchFuncMap[functionName] = 0;
+    }
+    this.branchFuncMap[functionName]++;
   }
 }
 
