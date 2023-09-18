@@ -12,14 +12,14 @@ class LeafNode {
   }
 
   encode(): any {
-    return {i: -1, w: 1, t: this.isTrue ? 1 : 0};
+    return {i: -1, w: [1], t: this.isTrue ? 1 : 0};
   }
 }
 
 interface TreeNodeOptions {
   index?: number
   owner?: Tree
-  weight?: number
+  weights?: number[]
   impurity?: number
   range?: number[]
 }
@@ -27,8 +27,8 @@ interface TreeNodeOptions {
 export class TreeNode {
   name?: string;
   index?: number;
-  weight?: number;
-  decisionFunction: any;
+  weights?: number[];
+  decisionFunction: (point: any, weights: number[] | undefined, data: any[], idx: number) => boolean;
   trueNode?: TreeNode | LeafNode;
   falseNode?: TreeNode | LeafNode;
   owner?: Tree;
@@ -40,11 +40,11 @@ export class TreeNode {
     this.name = name;
     this.index = options?.index;
     this.owner = options?.owner;
-    this.weight = options?.weight ?? 1;
+    this.weights = options?.weights ?? [1];
     this.impurity = options?.impurity;
   }
 
-  classify(dataPoint: any): any {
+  classify(dataPoint: any, data: any[], dataPointIdx: number): any {
     /**
      * Check for issues
      */
@@ -54,13 +54,14 @@ export class TreeNode {
     if (this.owner && this.name) {
       this.owner.incrementBranchFuncMapCount(this.name);
     }
-    return this.decisionFunction(dataPoint, this.weight) ? this.trueNode.classify(dataPoint) : this.falseNode.classify(dataPoint);
+    return this.decisionFunction(dataPoint, this.weights, data, dataPointIdx) ?
+      this.trueNode.classify(dataPoint, data, dataPointIdx) : this.falseNode.classify(dataPoint, data, dataPointIdx);
   }
 
   encode(): any {
     return {
       i: this.index,
-      w: this.weight,
+      w: this.weights ?? [1],
       l: this?.trueNode?.encode(),
       r: this?.falseNode?.encode()
     };
@@ -131,8 +132,8 @@ class Tree {
   createBranches(node: TreeNode, data: any[], curDepth: number) {
     let leftData: any[] = [];
     let rightData: any[] = [];
-    data.forEach(point => {
-      if (node.decisionFunction(point, node.weight)) {
+    data.forEach((point, dataPointIdx) => {
+      if (node.decisionFunction(point, node.weights, data, dataPointIdx)) {
         leftData.push(point)
       } else {
         rightData.push(point);
@@ -211,12 +212,14 @@ class Tree {
   /**
    * Predicts the class (true or false) given a data point
    * @param dataPoint
+   * @param data - data array which contains point
+   * @param dataPointIdx - index of point in data
    */
-  classify(dataPoint: any): boolean {
+  classify(dataPoint: any, data: any[], dataPointIdx: number): boolean {
     if (!this.rootNode) {
       throw("Root node not found. Please grow tree.");
     }
-    return this.rootNode.classify(dataPoint);
+    return this.rootNode.classify(dataPoint, data, dataPointIdx);
   }
 
   /**
@@ -265,7 +268,7 @@ class Tree {
     return new TreeNode(nodeClone.decisionFunction, nodeClone.name, {
       index: minNodeIndex,
       owner: this,
-      weight: nodeClone.weight,
+      weights: nodeClone.weights,
       impurity,
     });
   }
@@ -279,8 +282,8 @@ class Tree {
   nodeGiniImpurity(node: TreeNode, data: any[]) {
     let leftData: any[] = [];
     let rightData: any[] = [];
-    data.forEach(point => {
-      if (node.decisionFunction(point, node.weight)) {
+    data.forEach((point, dataPointIdx) => {
+      if (node.decisionFunction(point, node.weights, data, dataPointIdx)) {
         leftData.push(point)
       } else {
         rightData.push(point);
@@ -351,7 +354,9 @@ class Tree {
     const node = new TreeNode(nodeClone.decisionFunction, nodeClone.name, {
       index: encodedBranch.i,
       owner: this,
-      weight: parseFloat(encodedBranch.w),
+      weights: encodedBranch?.w?.map?.((weight: number) => {
+        return weight;
+      }) ?? [],
     });
     if (toLeft) {
       parentNode.trueNode = node;
@@ -376,7 +381,9 @@ class Tree {
     const rootNode = new TreeNode(nodeClone.decisionFunction, nodeClone.name, {
       index: encodedTree.i,
       owner: this,
-      weight: parseFloat(encodedTree.w),
+      weights: encodedTree.w.map((weight: number) => {
+        return weight;
+      }),
     });
 
     /**

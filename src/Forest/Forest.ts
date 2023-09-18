@@ -65,23 +65,23 @@ class Forest {
     }
   }
 
-  getPercentage(dataPoint: any): number {
+  getPercentage(dataPoint: any, data: any[], dataPointIdx: number): number {
     let trueVotes = 0;
     this.trees.forEach(tree => {
-      trueVotes += tree.classify(dataPoint) ? 1 : 0;
+      trueVotes += tree.classify(dataPoint, data, dataPointIdx) ? 1 : 0;
       this.addTreeFuncsToBranchFuncUseMap(tree);
     });
 
     return trueVotes / this.trees.length;
   }
 
-  makePrediction(dataPoint: any, silent = false): boolean {
+  makePrediction(dataPoint: any, silent = false, data = [], dataIdx = 0): boolean {
     /**
      * Gather votes from all trees in the forest
      */
     let trueVotes = 0;
     this.trees.forEach(tree => {
-      trueVotes += tree.classify(dataPoint) ? 1 : 0;
+      trueVotes += tree.classify(dataPoint, data, dataIdx) ? 1 : 0;
       this.addTreeFuncsToBranchFuncUseMap(tree);
     });
 
@@ -97,10 +97,10 @@ class Forest {
   }
 
   sortTreesByDataset(dataset: any[], pointFunction: (point: any) => number) {
-    dataset.forEach(dataPoint => {
+    dataset.forEach((dataPoint, dataPointIdx) => {
       const points = pointFunction(dataPoint);
       this.trees.forEach(tree => {
-        const usePoint = tree.classify(dataPoint);
+        const usePoint = tree.classify(dataPoint, dataset, dataPointIdx);
         if (usePoint) {
           tree.score += points;
         }
@@ -165,23 +165,33 @@ class Forest {
   async loadForest(filePath: string, fileName: string = "forest.json", branchingNodes: any[]) {
     return new Promise((resolve, reject) => {
       this.branchingNodes = branchingNodes;
+      if (!fs.existsSync(`${filePath}/${fileName}`)) {
+        resolve(null);
+      }
       fs.readFile(`${filePath}/${fileName}`, 'utf8', (err, data) => {
         if (err) {
           reject(err);
         }
-        const jsonForest = JSON.parse(data);
-        jsonForest.forEach((encodedTree: any) => {
-          const newTree = new Tree(
-            this.hasDesiredAttribute,
-            {
-              randomFeaturePercent: this.randomFeaturePercent,
-              treeDepth: this.treeDepth,
-              threshold: this.threshold
-            }
-          );
-          newTree.decodeTree(branchingNodes, encodedTree);
-          this.trees.push(newTree);
-        });
+        if (!data) {
+          reject("File not found for forest!")
+        }
+        try {
+          const jsonForest = JSON.parse(data);
+          jsonForest.forEach((encodedTree: any) => {
+            const newTree = new Tree(
+              this.hasDesiredAttribute,
+              {
+                randomFeaturePercent: this.randomFeaturePercent,
+                treeDepth: this.treeDepth,
+                threshold: this.threshold
+              }
+            );
+            newTree.decodeTree(branchingNodes, encodedTree);
+            this.trees.push(newTree);
+          });
+        } catch (e) {
+          resolve(null);
+        }
         resolve(this);
       })
     });

@@ -32,8 +32,8 @@ export const testBuildStockForest = async () => {
 export const testPerformance = (stockForest: Forest) => {
   let forestScore = 0;
   let marketScore = 0;
-  testData.forEach(dataPoint => {
-    const result = stockForest.getPercentage(dataPoint);
+  testData.forEach((dataPoint, dataPointIdx) => {
+    const result = stockForest.getPercentage(dataPoint, testData, dataPointIdx);
     if (result > .5) {
       forestScore += parseFloat(dataPoint.deltaNextMonthPriceAndDiv);
     }
@@ -207,11 +207,23 @@ export const evolveStockForest = async () => {
   console.log('Result Forest Score: ', resultForest?.score);
   testStockForest(resultForest);
 
-  const currentBest = await consumeStockForest('bestStockForest');
-  const currentBestPerformance = testPerformance(currentBest);
-  console.log('Current bestStockForest score: ', currentBestPerformance.forestScore);
-  if (currentBestPerformance.forestScore < (resultForest?.score ?? 0)) {
-    console.log('Result is better, saving as best');
+  console.log('Loading the current best stock forest');
+  try {
+    const currentBest = await consumeStockForest('bestStockForest');
+    if (!currentBest) {
+      console.log('No current best saved, saving!');
+      await resultForest.saveForest(`${process.cwd()}/SavedForests`, "bestStockForest.json");
+      return;
+    }
+    console.log('Testing performance of current best stock forest');
+    const currentBestPerformance = testPerformance(currentBest);
+    console.log('Current bestStockForest score: ', currentBestPerformance.forestScore);
+    if (currentBestPerformance.forestScore < (resultForest?.score ?? 0)) {
+      console.log('Result is better, saving as best');
+      await resultForest.saveForest(`${process.cwd()}/SavedForests`, "bestStockForest.json");
+    }
+  } catch (e) {
+    console.log('Error loading current best. Saving!');
     await resultForest.saveForest(`${process.cwd()}/SavedForests`, "bestStockForest.json");
   }
 };
