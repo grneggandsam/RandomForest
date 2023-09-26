@@ -31,7 +31,7 @@ export interface StockData {
   deltaPerRealDividend: string;
 }
 
-const MONTHS_BACK = 6;
+const MONTHS_BACK = 12;
 
 const increaseInPrice = new TreeNode((dataPoint: StockData) => {
   return parseFloat(dataPoint.deltaNextMonthPriceAndDiv) > 0;

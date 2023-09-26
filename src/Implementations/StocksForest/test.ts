@@ -4,8 +4,7 @@ import { buildStockForest, consumeStockBestTree, consumeStockForest, getStockFor
 import { TreeNode } from "../../Tree/Tree";
 import Evolution from "../../Evolution/Evolution";
 import {getStocksBranchNodes} from "./StocksBranchNodes";
-
-
+import {saveJsonAsCSV, saveStringifiedJson} from "../../Util/util";
 
 export const createSortedBranchArray = ((branchFuncMap: any, branchingNodes: TreeNode[]) => {
   const branchMap: any = {};
@@ -29,25 +28,37 @@ export const testBuildStockForest = async () => {
   testStockForest(forest);
 };
 
-export const testPerformance = (stockForest: Forest) => {
-  let forestScore = 0;
-  let marketScore = 0;
+export const testPerformance = (stockForest: Forest, generateAnalysis = false) => {
+  let forestScore = 100;
+  let marketScore = 100;
+  const analysisData: any[] = [];
+  const snpData: any[] = [];
+  const compData: any[] = [];
   testData.forEach((dataPoint, dataPointIdx) => {
     const result = stockForest.getPercentage(dataPoint, testData, dataPointIdx);
     if (result > .5) {
-      forestScore += parseFloat(dataPoint.deltaNextMonthPriceAndDiv);
+      forestScore *= parseFloat(dataPoint.percentageChange);
     }
-    marketScore += parseFloat(dataPoint.deltaNextMonthPriceAndDiv);
+    marketScore *= parseFloat(dataPoint.percentageChange);
+    analysisData.push({ date: dataPoint.date, result });
+    snpData.push({ date: dataPoint.date, value: dataPoint.price });
+    compData.push({ date: dataPoint.date, marketScore, forestScore });
   });
+  if (generateAnalysis) {
+    console.log('Analysis Data: ', analysisData);
+    saveJsonAsCSV(analysisData, `${process.cwd()}/SavedForests/StockForestAnalysis.csv`);
+    saveJsonAsCSV(snpData, `${process.cwd()}/SavedForests/S&PAnalysis.csv`);
+    saveJsonAsCSV(compData, `${process.cwd()}/SavedForests/CompAnalysis.csv`);
+  }
   return {forestScore, marketScore};
 };
 
-export const testStockForest = (stockForest: Forest) => {
-  const performanceResult = testPerformance(stockForest);
+export const testStockForest = (stockForest: Forest, generateAnalysis = false) => {
+  const performanceResult = testPerformance(stockForest, generateAnalysis);
   const branchArr = createSortedBranchArray(stockForest.branchFuncUseMap, stockForest?.branchingNodes ?? []);
 
   console.log('Performance Result: ', performanceResult);
-  console.log('Compared to Market: ', (performanceResult.forestScore + 963.36) / (performanceResult.marketScore + 963.36));
+  console.log('Compared to Market: ', performanceResult.forestScore / performanceResult.marketScore);
 
   stockForest.testTreesInDataset(testData, (dataPoint) => {
     return parseFloat(dataPoint.deltaNextMonthPriceAndDiv);
@@ -56,90 +67,13 @@ export const testStockForest = (stockForest: Forest) => {
 
   stockForest.saveTreeByIndex(`${process.cwd()}/SavedForests`, "stockForestBestTree.json", 0);
 
-
-  const testDataPoint1 = {
-    "peRatio": "26.8",
-    "realPrice": "1558.63",
-    "dividend": "16.14",
-    "realDividend": "24.65",
-    "price": "1020.64",
-    "earnings": "38.09",
-    "cpi": "163.6",
-    "nextMonthPrice": "1032.47",
-    "deltaNextMonthPrice": "11.830",
-    "deltaNextMonthPriceAndDiv": "13.175",
-    "deltaPrice": "-53.980",
-    "deltaPerPrice": "-0.050",
-    "deltaEarnings": "-0.290",
-    "deltaPerEarnings": "-0.008",
-    "deltaCPI": "0.200",
-    "deltaPerCPI": "0.001",
-    "deltaRealDividend": "0.060",
-    "deltaPerRealDividend": "0.002",
-    "fedFunds": "5.51",
-    "deltaFedFunds": "-0.040",
-    "unemRate": "4.6",
-    "deltaUnemRate": "0.100",
-    "date": "1998-09-01"
-  };
-  const result = stockForest.makePrediction(testDataPoint1);
+  const result = stockForest.makePrediction(testData[128]);
   console.log("Result1 is (should be true): ", result);
 
-  const testDataPoint2 = {
-    "peRatio": "34.99",
-    "realPrice": "1038.55",
-    "dividend": "28.54",
-    "realDividend": "33.57",
-    "price": "883.04",
-    "earnings": "25.24",
-    "cpi": "212.43",
-    "nextMonthPrice": "877.56",
-    "deltaNextMonthPrice": "-5.480",
-    "deltaNextMonthPriceAndDiv": "-3.102",
-    "deltaPrice": "-85.760",
-    "deltaPerPrice": "-0.089",
-    "deltaEarnings": "-10.350",
-    "deltaPerEarnings": "-0.291",
-    "deltaCPI": "-4.140",
-    "deltaPerCPI": "-0.019",
-    "deltaRealDividend": "0.470",
-    "deltaPerRealDividend": "0.014",
-    "fedFunds": "0.39",
-    "deltaFedFunds": "-0.580",
-    "unemRate": "6.8",
-    "deltaUnemRate": "0.300",
-    "date": "2008-11-01"
-  };
-  const result2 = stockForest.makePrediction(testDataPoint2);
+  const result2 = stockForest.makePrediction(testData[250]);
   console.log("Result2 is (should be false): ", result2);
 
-
-  const testDataPoint3 = {
-    "peRatio": "24.25",
-    "realPrice": "2700.13",
-    "dividend": "48.93",
-    "realDividend": "49.59",
-    "price": "2664.34",
-    "earnings": "109.88",
-    "cpi": "246.52",
-    "nextMonthPrice": "2789.8",
-    "deltaNextMonthPrice": "125.460",
-    "deltaNextMonthPriceAndDiv": "129.538",
-    "deltaPrice": "70.730",
-    "deltaPerPrice": "0.027",
-    "deltaEarnings": "0.930",
-    "deltaPerEarnings": "0.009",
-    "deltaCPI": "-0.150",
-    "deltaPerCPI": "-0.001",
-    "deltaRealDividend": "0.290",
-    "deltaPerRealDividend": "0.006",
-    "fedFunds": "1.30",
-    "deltaFedFunds": "0.140",
-    "unemRate": "4.1",
-    "deltaUnemRate": "-0.100",
-    "date": "2017-12-01"
-  };
-  const result3 = stockForest.makePrediction(testDataPoint3);
+  const result3 = stockForest.makePrediction(testData[359]);
   console.log("Result3 is (should be true): ", result3);
 
 
@@ -173,7 +107,7 @@ export const testStockForest = (stockForest: Forest) => {
 export const testConsumeStockForest = async (filename: string | undefined) => {
   const forest = await consumeStockForest(filename);
   console.log("Consumed forest, now predicting results");
-  await testStockForest(forest);
+  await testStockForest(forest, false);
 };
 
 export const testConsumeStockBestTree = async () => {

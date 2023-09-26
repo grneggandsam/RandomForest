@@ -44,7 +44,7 @@ export const getStockForest = () => {
       return parseFloat(dataPoint.deltaNextMonthPriceAndDiv) > 0;
     }, {
       numTrees: 50,
-      treeDepth: 12,
+      treeDepth: 14,
       trainingPercent: .25,
       randomFeaturePercent: .8,
       threshold: .20

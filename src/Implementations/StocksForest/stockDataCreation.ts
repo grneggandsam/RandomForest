@@ -5,7 +5,7 @@ import {
   spreadDeltaPercentageIdx
 } from "../../Util/util";
 
-const MONTHS_BACK = 6;
+const MONTHS_BACK = 12;
 
 export const aggregateStockData = async () => {
   aggregateMonthlyDataFromDates(
@@ -46,6 +46,12 @@ export const aggregateStockData = async () => {
             return (parseFloat(dataPoints[dataIdx + 1]["SP500"]) - parseFloat(dataPoints[dataIdx ]["SP500"]) + parseFloat(dataPoints[dataIdx ]["Dividend"])/12.0).toFixed(3);
           }
           return "0.0";
+        },
+        "percentageChange": (dataPoint: any, dataIdx: number, dataPoints: any[]) => {
+          if ((dataIdx + 1) < dataPoints.length) {
+            return ((parseFloat(dataPoints[dataIdx + 1]["SP500"]) + parseFloat(dataPoints[dataIdx ]["Dividend"])/12.0) / parseFloat(dataPoints[dataIdx ]["SP500"])).toFixed(3);
+          }
+          return "1.0";
         },
         ...spreadDeltaDefIdx("deltaPrice", "SP500", [1, MONTHS_BACK]),
         ...spreadDeltaPercentageIdx("deltaPerPrice", "SP500", 100, [1, MONTHS_BACK]),

@@ -143,7 +143,7 @@ class Forest {
           throw(err);
         }
         resolve(stringifiedForest);
-      })
+      });
     });
   }
 

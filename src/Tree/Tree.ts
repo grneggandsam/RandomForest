@@ -90,7 +90,7 @@ class Tree {
   treeDepth: number;
   threshold: number;
   randomFeaturePercent: number;
-  hasDesiredAttribute: any;
+  hasDesiredAttribute: (point: any, data?: any[]) => boolean;
   rootNode?: TreeNode;
   branchingNodes?: TreeNode[];
   score: number = 0;
