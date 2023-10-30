@@ -3,7 +3,7 @@ import moment, {Moment} from "moment";
 import Tree, {TreeNode} from "../Tree/Tree";
 import {StockData} from "../Implementations/StocksForest/StocksBranchNodes";
 
-export const MONTH_FORMAT = 'YYYY-MM-DD';
+export const MONTH_FORMAT = 'YYYY-MM';
 
 export const formatDate = (date: Moment): string => {
   return date.format(MONTH_FORMAT);
@@ -30,7 +30,7 @@ export const randomSubselection = (data: any, percent: number) => {
 
 export const csvToJson = (csvString: string): any[] => {
   const csvArray = csvString.split('\n');
-  const objectKeys = csvArray[0].split(',');
+  const objectKeys = csvArray[0].split(',').map(oKey => oKey.trim());
   const output: any[] = [];
   csvArray.forEach((item, idx) => {
     if (idx === 0) {
@@ -38,11 +38,34 @@ export const csvToJson = (csvString: string): any[] => {
     }
     const jsonObject: any = {};
     item.split(',').forEach((csvValue, csvIndex) => {
-      jsonObject[objectKeys[csvIndex]] = csvValue;
+      jsonObject[objectKeys[csvIndex]] = csvValue.trim();
     });
     output.push(jsonObject);
   });
   return output;
+};
+
+export const JSONtoCSV = (obj: any[]): string => {
+  let csvString = "";
+  const keys = Object.keys(obj[0]);
+  keys.forEach((key, idx) => {
+    if (idx === 0) {
+      csvString += key;
+    } else {
+      csvString += `,${key}`;
+    }
+  });
+  obj.forEach(dataPoint => {
+    csvString += '\n';
+    keys.forEach((key, idx) => {
+      if (idx === 0) {
+        csvString += dataPoint[key];
+      } else {
+        csvString += `,${dataPoint[key]}`;
+      }
+    });
+  });
+  return csvString;
 };
 
 export function convertDataFromCSV(fileName: string) {
@@ -71,7 +94,10 @@ export function saveDataAsFile(data: any, fileName: string) {
   })
 }
 
-export function getDataFromFile(fileName: string): Promise<any> {
+export function getDataFromFile(fileName: string, fileType: string): Promise<any> {
+  if (fileType === "csv") {
+    return getDataFromCSVFile(fileName);
+  }
   return new Promise((resolve, reject) => {
     fs.readFile(`${process.cwd()}/src/Fixtures/${fileName}.json`, "utf8", (err, data) => {
       if (err) {
@@ -85,18 +111,40 @@ export function getDataFromFile(fileName: string): Promise<any> {
   });
 }
 
+export function getDataFromCSVFile(fileName: string): Promise<any> {
+  return new Promise((resolve, reject) => {
+    fs.readFile(`${process.cwd()}/src/Fixtures/${fileName}.csv`, "utf8", (err, data) => {
+      if (err) {
+        console.error(err);
+        reject(err);
+        return
+      }
+      const returnData = csvToJson(data);
+      resolve(returnData);
+    })
+  });
+}
+
 interface Mapping {
   [mapKey: string]: string | any;
 }
 
 interface FileOptions {
   name: string;
+  fileType: string;
+  secondary?: boolean;
   map: Mapping;
 }
 
-export async function aggregateMonthlyDataFromDates(startDate: string, endDate: string, files: FileOptions[], outputName: string) {
+export async function aggregateMonthlyDataFromDates(
+  startDate: string,
+  endDate: string,
+  files: FileOptions[],
+  outputName: string,
+  randRatio: number = 1,
+) {
   const dates = [];
-  const datesObj: any = {};
+  const datesObj: Mapping = {};
   const momentStartDate = moment(startDate);
   const momentEndDate = moment(endDate);
   let curDate = momentStartDate;
@@ -110,10 +158,17 @@ export async function aggregateMonthlyDataFromDates(startDate: string, endDate: 
   }
   console.log('Built Date Object, now ingesting data');
 
+  let secondaryMappings: Mapping = {};
   for (let i = 0; i < files.length; i++) {
     const fileName = files[i].name;
+    const fileType = files[i].fileType;
     const fileMap = files[i].map;
-    let dataPoints: any[] | void = await getDataFromFile(fileName);
+    const secondary = files[i].secondary;
+    if (secondary) {
+      secondaryMappings = {...secondaryMappings, ...fileMap};
+      continue;
+    }
+    let dataPoints: any[] | void = await getDataFromFile(fileName, fileType);
     console.log('Got data from file: ', fileName);
     if (!Array.isArray(dataPoints)) {
       console.log('Data is not an array! Its: ', typeof dataPoints);
@@ -141,11 +196,37 @@ export async function aggregateMonthlyDataFromDates(startDate: string, endDate: 
       }
     }
   }
-
   // @ts-ignore
-  const finalData = Object.entries(datesObj).map(([isoDate, item], index) => ({...item, date: isoDate, index}));
+  const fullData = Object.entries(datesObj).map(
+    ([isoDate, dataPoint], index) => {
+      return {...dataPoint, date: isoDate, index};
+    }
+  );
+  const processedData = fullData.map(dataPoint => {
+    Object.entries(secondaryMappings).forEach(([fileKey, fileMappedKey]) => {
+      if (typeof fileMappedKey == 'function') {
+        // @ts-ignore
+        dataPoint[fileKey] = fileMappedKey(dataPoint, dataPoint.index, fullData);
+      } else if (dataPoint[fileKey]) {
+        dataPoint[fileMappedKey] = dataPoint[fileKey];
+      }
+    });
+
+    return dataPoint;
+  });
+
+  let testData: any[] = [];
+  const trainData = processedData.filter((dataPoint) => {
+      const keep =  Math.random() < randRatio;
+      if (!keep) {
+        testData.push(dataPoint);
+      }
+      return keep;
+  });
   console.log('Finished ingesting data, now saving');
-  saveDataAsFile(finalData, outputName);
+  saveDataAsFile(processedData, outputName);
+  saveDataAsFile(testData, `${outputName}-test`);
+  saveDataAsFile(trainData, `${outputName}-train`);
 }
 
 export const spreadTreeNodes = (min: number, max: number, divisions: number, name: string): TreeNode[] => {
@@ -268,11 +349,12 @@ export const createDeltaPer = (
 export const spreadDeltaDefIdx = (
   objKey: string,
   attributeKey: string,
-  range = [1, 4]
+  range = [1, 4],
+  offset = 0,
 ) => {
   const deltaDefObj: any = {};
   for (let i = range[0]; i <= range[1]; i++) {
-    deltaDefObj[objKey + `-${i}`] = (dataPoint: any, dataIdx: number, dataPoints: any[]) => createDeltaDef(dataIdx, dataPoints, attributeKey, i);
+    deltaDefObj[objKey + `-${i}`] = (dataPoint: any, dataIdx: number, dataPoints: any[]) => createDeltaDef(dataIdx + offset, dataPoints, attributeKey, i);
   }
   return deltaDefObj;
 };
@@ -282,6 +364,7 @@ export const spreadDeltaPercentageIdx = (
   attributeKey: string,
   multiplier: number = 1,
   range = [1, 4],
+  offset = 0,
 ) => {
   const deltaDefObj: any = {};
   for (let i = range[0]; i <= range[1]; i++) {
@@ -289,7 +372,7 @@ export const spreadDeltaPercentageIdx = (
       dataPoint: any,
       dataIdx: number,
       dataPoints: any[]
-    ) => createDeltaPer(dataIdx, dataPoints, attributeKey, multiplier, i);
+    ) => createDeltaPer(dataIdx + offset, dataPoints, attributeKey, multiplier, i);
   }
   return deltaDefObj;
 };
@@ -306,29 +389,6 @@ export const saveStringifiedJson = (obj: any, filename: string) => {
       resolve(stringified);
     });
   });
-};
-
-export const JSONtoCSV = (obj: any[]): string => {
-  let csvString = "";
-  const keys = Object.keys(obj[0]);
-  keys.forEach((key, idx) => {
-    if (idx === 0) {
-      csvString += key;
-    } else {
-      csvString += `,${key}`;
-    }
-  });
-  obj.forEach(dataPoint => {
-    csvString += '\n';
-    keys.forEach((key, idx) => {
-      if (idx === 0) {
-        csvString += dataPoint[key];
-      } else {
-        csvString += `,${dataPoint[key]}`;
-      }
-    });
-  });
-  return csvString;
 };
 
 export const saveJsonAsCSV = (obj: any[], filename: string) => {

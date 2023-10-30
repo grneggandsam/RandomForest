@@ -58,7 +58,7 @@ class Evolution {
     this.currentGeneration.plantTrees(this.data, this.getBranchNodes(this.data));
     this.currentGeneration.score = this.testPerformance(this.currentGeneration);
     if (!quiet) {
-      console.log('New Generation Score: ', this.currentGeneration.score)
+      console.log('New Generation Score: ', this.currentGeneration.score, ', highest: ', this.lastGeneration?.score ?? 0)
     }
   }
 }

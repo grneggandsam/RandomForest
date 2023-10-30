@@ -1,10 +1,12 @@
 import Forest from "../../Forest/Forest";
-import testData from "../../Fixtures/Stock/aggregated.json";
+import testData from "../../Fixtures/Stock/aggregated-test.json";
+import trainData from "../../Fixtures/Stock/aggregated-test.json";
+import fullData from "../../Fixtures/Stock/aggregated.json";
 import { buildStockForest, consumeStockBestTree, consumeStockForest, getStockForest } from "./StocksForest";
 import { TreeNode } from "../../Tree/Tree";
 import Evolution from "../../Evolution/Evolution";
 import {getStocksBranchNodes} from "./StocksBranchNodes";
-import {saveJsonAsCSV, saveStringifiedJson} from "../../Util/util";
+import { saveJsonAsCSV } from "../../Util/util";
 
 export const createSortedBranchArray = ((branchFuncMap: any, branchingNodes: TreeNode[]) => {
   const branchMap: any = {};
@@ -28,14 +30,14 @@ export const testBuildStockForest = async () => {
   testStockForest(forest);
 };
 
-export const testPerformance = (stockForest: Forest, generateAnalysis = false) => {
+export const testPerformance = (stockForest: Forest, generateAnalysis = false, dataSet = testData) => {
   let forestScore = 100;
   let marketScore = 100;
   const analysisData: any[] = [];
   const snpData: any[] = [];
   const compData: any[] = [];
-  testData.forEach((dataPoint, dataPointIdx) => {
-    const result = stockForest.getPercentage(dataPoint, testData, dataPointIdx);
+  dataSet.forEach((dataPoint: any, dataPointIdx) => {
+    const result = stockForest.getPercentage(dataPoint, dataSet, dataPointIdx);
     if (result > .5) {
       forestScore *= parseFloat(dataPoint.percentageChange);
     }
@@ -54,7 +56,7 @@ export const testPerformance = (stockForest: Forest, generateAnalysis = false) =
 };
 
 export const testStockForest = (stockForest: Forest, generateAnalysis = false) => {
-  const performanceResult = testPerformance(stockForest, generateAnalysis);
+  const performanceResult = testPerformance(stockForest, generateAnalysis, fullData);
   const branchArr = createSortedBranchArray(stockForest.branchFuncUseMap, stockForest?.branchingNodes ?? []);
 
   console.log('Performance Result: ', performanceResult);
@@ -67,41 +69,19 @@ export const testStockForest = (stockForest: Forest, generateAnalysis = false) =
 
   stockForest.saveTreeByIndex(`${process.cwd()}/SavedForests`, "stockForestBestTree.json", 0);
 
-  const result = stockForest.makePrediction(testData[128]);
+  const result = stockForest.makePrediction(fullData[128]);
   console.log("Result1 is (should be true): ", result);
 
-  const result2 = stockForest.makePrediction(testData[250]);
+  const result2 = stockForest.makePrediction(fullData[250]);
   console.log("Result2 is (should be false): ", result2);
 
-  const result3 = stockForest.makePrediction(testData[359]);
+  const result3 = stockForest.makePrediction(fullData[359]);
   console.log("Result3 is (should be true): ", result3);
 
 
-  const testDataPointToday = {
-    "peRatio": "23.46",
-    "realPrice": "4507.66",
-    "dividend": "67.619",
-    "dividendPer": "0.015",
-    "realDividend": "67.619",
-    "deltaRealDividend": "0.0",
-    "deltaPerRealDividend": "0.0",
-    "price": "4507.66",
-    "deltaPrice": "-58.09",
-    "deltaPerPrice": "-0.013",
-    "earnings": "175.15",
-    "deltaEarnings": "0.810",
-    "deltaPerEarnings": "0.005",
-    "cpi": "305.691",
-    "deltaCPI": "0.582",
-    "deltaPerCPI": "0.001",
-    "fedFunds": "5.33",
-    "deltaFedFunds": "0.210",
-    "unemRate": "3.8",
-    "deltaUnemRate": "0.3",
-    "date": "2023-08-31"
-  };
+  const testDataPointToday = fullData[fullData.length - 1];
   const result4 = stockForest.makePrediction(testDataPointToday);
-  console.log("Should invest Today: ", result4);
+  console.log(`Should invest Today ${testDataPointToday.date}: `, result4);
 };
 
 export const testConsumeStockForest = async (filename: string | undefined) => {
@@ -124,8 +104,8 @@ export const printStockForest = async () => {
 
 export const evolveStockForest = async () => {
   const forest = getStockForest();
-  const evolution = new Evolution(forest, testData, getStocksBranchNodes, {
-    generations: 100,
+  const evolution = new Evolution(forest, trainData, getStocksBranchNodes, {
+    generations: 4000,
     testPerformance: (currentForest) => {
       const { forestScore } = testPerformance(currentForest);
       return forestScore;

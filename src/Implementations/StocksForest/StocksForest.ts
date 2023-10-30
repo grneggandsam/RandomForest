@@ -1,6 +1,6 @@
 import Forest from "../../Forest/Forest";
 import { StockData, getStocksBranchNodes } from "./StocksBranchNodes";
-import testData from "../../Fixtures/Stock/aggregated.json";
+import trainData from "../../Fixtures/Stock/aggregated-train.json";
 
 /**
  * This is a scheme to determine whether one should invest in the S&P500 index for a given month.
@@ -20,7 +20,7 @@ export const buildStockForest = async () => {
   console.log("Creating Forest");
   const stockForest = getStockForest();
 
-  stockForest.plantTrees(testData, getStocksBranchNodes(testData));
+  stockForest.plantTrees(trainData, getStocksBranchNodes(trainData));
 
   await stockForest.saveForest(`${process.cwd()}/SavedForests`, "stockForest.json");
   return stockForest;
@@ -28,13 +28,13 @@ export const buildStockForest = async () => {
 
 export const consumeStockForest = async (name: string = 'stockForest') => {
   const stockForest = getStockForest();
-  await stockForest.loadForest(`${process.cwd()}/SavedForests`, `${name}.json`, getStocksBranchNodes(testData));
+  await stockForest.loadForest(`${process.cwd()}/SavedForests`, `${name}.json`, getStocksBranchNodes(trainData));
   return stockForest;
 };
 
 export const consumeStockBestTree = async () => {
   const stockForest = getStockForest();
-  await stockForest.loadForest(`${process.cwd()}/SavedForests`, "stockForestBestTree.json", getStocksBranchNodes(testData));
+  await stockForest.loadForest(`${process.cwd()}/SavedForests`, "stockForestBestTree.json", getStocksBranchNodes(trainData));
   return stockForest;
 };
 

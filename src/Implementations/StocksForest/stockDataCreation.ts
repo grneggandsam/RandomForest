@@ -9,69 +9,55 @@ const MONTHS_BACK = 12;
 
 export const aggregateStockData = async () => {
   aggregateMonthlyDataFromDates(
-    '1988-01-01',
-    '2018-01-01',
+    '1987-01-01',
+    '2023-10-31',
     [
-      {name: 'Stock/pe_ratios', map: {
+      {name: 'Stock/pe_ratios', fileType: 'json', map: {
         Value: 'peRatio',
-        "deltaPeRatio": (dataPoint: any, dataIdx: number, dataPoints: any[]) => {
-          if (dataIdx > 0) {
-            return createDelta(dataIdx, dataPoints, "Value");
-          }
-          return "0.0";
-        },
         ...spreadDeltaDefIdx("deltaPeRatio", "Value", [1, MONTHS_BACK]),
       }},
-      {name: 'Stock/data_csv', map: {
-        "Real Price": 'realPrice',
-        "Dividend": 'dividend',
-        "Real Dividend": 'realDividend',
-        "SP500": 'price',
-        "Earnings": 'earnings',
-        "Consumer Price Index": 'cpi',
-        "nextMonthPrice": (dataPoint: any, dataIdx: number, dataPoints: any[]) => {
-          if ((dataIdx + 1) < dataPoints.length) {
-            return dataPoints[dataIdx + 1]["SP500"];
-          }
-          return "0.0";
-        },
-        "deltaNextMonthPrice": (dataPoint: any, dataIdx: number, dataPoints: any[]) => {
-          if ((dataIdx + 1) < dataPoints.length) {
-            return (parseFloat(dataPoints[dataIdx + 1]["SP500"]) - parseFloat(dataPoints[dataIdx ]["SP500"])).toFixed(3);
-          }
-          return "0.0";
-        },
+      {name: 'Stock/SP500', fileType: 'csv', map: {
+        Open: 'price',
+        ...spreadDeltaDefIdx("deltaPrice", "Open", [1, MONTHS_BACK]),
+        ...spreadDeltaPercentageIdx("deltaPerPrice", "Open", 100, [1, MONTHS_BACK]),
+        }
+      },
+      {name: 'Stock/sp500DividendYield', fileType: 'csv', map: {
+        DividendYield: 'dividend',
+        ...spreadDeltaDefIdx("deltaDividend", "DividendYield", [1, MONTHS_BACK]),
+        ...spreadDeltaPercentageIdx("deltaPerDividend", "DividendYield", 100, [1, MONTHS_BACK]),
+        }
+      },
+      {name: 'Stock/CPIAUCSL', fileType: 'csv', map: {
+        CPI: 'cpi',
+        ...spreadDeltaDefIdx("deltaCPI", "CPI", [1, MONTHS_BACK], -2),
+        ...spreadDeltaPercentageIdx("deltaPerCPI", "CPI", 100, [1, MONTHS_BACK], -2),
+        }
+      },
+      {name: 'Stock/fed_funds', fileType: 'json', map: {
+        "FEDFUNDS": "fedFunds",
+        ...spreadDeltaDefIdx("deltaFedFunds", "FEDFUNDS", [1, MONTHS_BACK], -1),
+      }},
+      {name: 'Stock/un_rate', fileType: 'json', map: {
+        "UNRATE": "unemRate",
+        ...spreadDeltaDefIdx("deltaUnemRate", "UNRATE", [1, MONTHS_BACK], -1),
+      }},
+      {name: 'secondary', fileType: 'json', secondary: true, map: {
         "deltaNextMonthPriceAndDiv": (dataPoint: any, dataIdx: number, dataPoints: any[]) => {
           if ((dataIdx + 1) < dataPoints.length) {
-            return (parseFloat(dataPoints[dataIdx + 1]["SP500"]) - parseFloat(dataPoints[dataIdx ]["SP500"]) + parseFloat(dataPoints[dataIdx ]["Dividend"])/12.0).toFixed(3);
+            return (parseFloat(dataPoints[dataIdx + 1]["price"]) - parseFloat(dataPoints[dataIdx ]["price"]) + parseFloat(dataPoints[dataIdx ]["dividend"])/12.0).toFixed(3);
           }
           return "0.0";
         },
         "percentageChange": (dataPoint: any, dataIdx: number, dataPoints: any[]) => {
           if ((dataIdx + 1) < dataPoints.length) {
-            return ((parseFloat(dataPoints[dataIdx + 1]["SP500"]) + parseFloat(dataPoints[dataIdx ]["Dividend"])/12.0) / parseFloat(dataPoints[dataIdx ]["SP500"])).toFixed(3);
+            return ((parseFloat(dataPoints[dataIdx + 1]["price"]) + parseFloat(dataPoints[dataIdx ]["dividend"])/12.0) / parseFloat(dataPoints[dataIdx ]["price"])).toFixed(3);
           }
           return "1.0";
         },
-        ...spreadDeltaDefIdx("deltaPrice", "SP500", [1, MONTHS_BACK]),
-        ...spreadDeltaPercentageIdx("deltaPerPrice", "SP500", 100, [1, MONTHS_BACK]),
-        ...spreadDeltaDefIdx("deltaEarnings", "Earnings", [1, MONTHS_BACK]),
-        ...spreadDeltaPercentageIdx("deltaPerEarnings", "Earnings", 100, [1, MONTHS_BACK]),
-        ...spreadDeltaDefIdx("deltaCPI", "Consumer Price Index", [1, MONTHS_BACK]),
-        ...spreadDeltaPercentageIdx("deltaPerCPI", "Consumer Price Index", 100, [1, MONTHS_BACK]),
-        ...spreadDeltaDefIdx("deltaRealDividend", "Real Dividend", [1, MONTHS_BACK]),
-        ...spreadDeltaPercentageIdx("deltaPerRealDividend", "Real Dividend", 100, [1, MONTHS_BACK]),
-        }
-      },
-      {name: 'Stock/fed_funds', map: {
-        "FEDFUNDS": "fedFunds",
-        ...spreadDeltaDefIdx("deltaFedFunds", "FEDFUNDS", [1, MONTHS_BACK]),
-      }},
-      {name: 'Stock/un_rate', map: {
-        "UNRATE": "unemRate",
-        ...spreadDeltaDefIdx("deltaUnemRate", "UNRATE", [1, MONTHS_BACK]),
       }},
     ],
-    'Stock/aggregated'
+    'Stock/aggregated',
+    .7
   );
 };
